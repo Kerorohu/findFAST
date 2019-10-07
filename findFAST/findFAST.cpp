@@ -16,7 +16,8 @@ bool myFAST(Mat image, Point point);
 void ORBdemo();
 int *midFilter(int move[], int size);
 int *sort(int *src, int size);
-	
+int rectx = 200;
+int recty = 650;
 
 Mat preImages, images;
 int Hession = 400;
@@ -52,7 +53,7 @@ int main()
 	//设置视频开始帧数
 	cap.set(CAP_PROP_POS_FRAMES, frameStrat);
 
-	int frameStop = 160;
+	int frameStop = 145;
 
 	//获取视频信息--帧率
 	double rate = cap.get(CAP_PROP_FPS);
@@ -65,7 +66,10 @@ int main()
 
 	cap.read(preImages);
 	cap.read(images);
-	
+
+	VideoWriter write;
+	string outVideo = "Show_Example.avi";
+	write.open(outVideo, VideoWriter::fourcc('M', 'J', 'P', 'G'), rate, Size(images.cols, images.rows), true);
 	
 	cout << "rows=" << images.rows << " cols=" << images.cols << endl;
 	while (stop)
@@ -88,6 +92,9 @@ int main()
 
 			cout << "正在读取第" << num << "帧" << endl;
 		}
+
+		write << images;
+
 		num++;
 		waitKey(1);
 
@@ -102,8 +109,9 @@ void ORBdemo() {
 	//操作系统启动到现在的时间（毫秒）
 	double t1 = getTickCount();
 
+	
 	Mat rectImage = preImages.clone();
-	rectImage = rectImage(Rect(preImages.cols/2 - 200, preImages.rows/2 - 100, 400, 200));
+	rectImage = rectImage(Rect(preImages.cols/2, preImages.rows/2, 200, 200));
 	//cout << rectImage.cols << " --rectImage-- " << rectImage.rows << endl;
 
 	//特征点提取
@@ -165,12 +173,14 @@ void ORBdemo() {
 		queryIdxs[i] = goodmatches[i].queryIdx;
 	}
 
-	vector<Point2f> newPoint;
-	vector<Point2f> newPoint2;
+	vector<Point2f> newPoint;//images
+	vector<Point2f> newPoint2;//preImages
 
 	//索引值转point2f
 	KeyPoint::convert(keypoints_scene, newPoint, trainIdxs);
+	//cout << "特征点re" << keypoints_scene.at(1).response << "关键点的oc" << keypoints_scene.at(1).octave << "idx" << trainIdxs[1] << endl;
 	KeyPoint::convert(keypoints_obj, newPoint2, queryIdxs);
+
 
 	int nums = goodmatches.size();
 	
@@ -179,8 +189,8 @@ void ORBdemo() {
 
 	for (size_t i = 0; i < goodmatches.size(); i++) {
 		//cout << "newPoint" << newPoint2.at(i).x << endl;
-		//disx[i] = newPoint.at(i).x - (newPoint2.at(i).x + preImages.cols/2 - 200) ;
-		//disy[i] = newPoint.at(i).y - (newPoint2.at(i).y + preImages.rows/2 -100) ;
+		//disx[i] = newPoint.at(i).x - (newPoint2.at(i).x + preImages.cols/2) ;
+		//disy[i] = newPoint.at(i).y - (newPoint2.at(i).y + preImages.rows/2) ;
 		disx[i] = newPoint.at(i).x - newPoint2.at(i).x ;
 		disy[i] = newPoint.at(i).y - newPoint2.at(i).y  ;
 	}
@@ -213,7 +223,11 @@ void ORBdemo() {
 	for (auto iter = newPoint.cbegin(); iter != newPoint.cend(); iter++) {
 		circle(images, *iter, 1, Scalar(0, 255, 0), -1);
 	}
+	rectx += avgx;
+	recty += avgy;
 
+	putText(images, "ORB", Point(rectx, recty - 5), 4, 1, Scalar(0, 0, 255), 1);
+	rectangle(images, Point(rectx,recty), Point(rectx + 180,recty+200), Scalar(0, 0, 255), 2, 8, 0);
 	
 	imshow("ORBdemo", images);
 	//Mat orbImg;
